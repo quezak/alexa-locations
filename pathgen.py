@@ -89,7 +89,7 @@ def get_instruction_prefix(pos, total, prev_wp, next_wp):
     if pos == 1:
         pname = prev_wp.name.lower()
         if pname.startswith('room') or 'toilet' in pname:
-            return "Exit to"
+            return "Exit to "
         return "Go to "
     if pos == total-1:
         return "Finally, head to "
