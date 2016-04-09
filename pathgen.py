@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+from __future__ import print_function
 from Queue import PriorityQueue
 from sys import maxint
 
@@ -82,24 +83,48 @@ def gen_path_description(graph, path):
     instrs = []
     for pos in xrange(1, len(path)):
         prefix = get_instruction_prefix(pos, len(path), graph[path[pos-1]], graph[path[pos]])
-        instrs.append(prefix + graph[path[pos]].name)
+        suffix = get_instruction_suffix(pos, len(path), graph[path[pos-1]], graph[path[pos]])
+        instrs.append(prefix + graph[path[pos]].name + suffix)
     return ". ".join(instrs)
 
 
+def get_instruction_suffix(pos, total, prev_wp, next_wp):
+    pname = prev_wp.name.lower()
+    nname = next_wp.name.lower()
+    if 'hallway' in pname and ('room' in nname or 'office' in nname):
+        return " on the right"
+    return ""
+
+
 def get_instruction_prefix(pos, total, prev_wp, next_wp):
+    pname = prev_wp.name.lower()
+    nname = next_wp.name.lower()
+    if 'hallway' in pname and ('room' in nname or 'office' in nname):
+        return "There, look for "
+    return _instruction_init(pos, total, prev_wp, next_wp) + " " + \
+        _instruction_target_prep(next_wp) + " "
+
+def _instruction_init(pos, total, prev_wp, next_wp):
     if pos == 1:
         pname = prev_wp.name.lower()
         if pname.startswith('room') or 'toilet' in pname:
-            return "Exit to "
-        return "Go to "
+            return "Exit"
+        return "Go"
     if pos == total-1:
         return "Finally, head to "
     options = [
-        "Then head to ",
-        "Continue to ",
-        "Next, go to ",
+        "Then head",
+        "Continue",
+        "Next, go",
     ]
     return options[(pos-1) % len(options)]
+
+
+def _instruction_target_prep(next_wp):
+    name = next_wp.name.lower()
+    if "hallway" in name:
+        return "down the"
+    return "to"
 
 
 def get_node(graph, name):
@@ -111,6 +136,8 @@ def get_node(graph, name):
 
 def get_instructions(db_graph, start, end_wps):
     graph = build_graph(db_graph)
+    print('targets: ', " | ".join(map(lambda wp: wp.name, end_wps)))
     target_ids = map(lambda wp: wp.node_id, end_wps)
     path = dijkstra(graph, start, target_ids)
+    print('path: ', path)
     return gen_path_description(graph, path)
