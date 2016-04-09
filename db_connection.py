@@ -2,17 +2,15 @@ import boto3
 from boto3.dynamodb.conditions import Key, Attr
 
 class DBWaypoint:
-    def __init__(self, node_id, name, connection_ids):
+    def __init__(self, node_id, name, connection_ids, tags):
         self.node_id = node_id
         self.name = name
+        self.tags = tags
         self.connection_ids = connection_ids
 
 class Database:
     def __init__(self):
-        self.dynamo = boto3.resource(
-                'dynamodb'
-                #endpoint_url="http://localhost:8000"
-        )
+        self.dynamo = boto3.resource('dynamodb')
         self.waypoints_table = self.dynamo.Table('Localization')
         self.device_table = self.dynamo.Table('Device')
         self._cache = None
@@ -30,10 +28,11 @@ class Database:
 
         return results
 
-    def waypoint_by_name(self, name):
-        needle = name.lower()
+    def waypoint_by_tag(self, tag):
+        needles = name.lower().split()
         for waypoint in self.cache():
-            if needle in waypoint.name.lower():
+            for needle in needles:
+                if needle in waypoint.tags:
                     return waypoint
         return None
 
@@ -43,15 +42,16 @@ class Database:
                 return waypoint
         return None
 
-    def waypoints_containing(self, name):
+    def waypoints_containing(self, tag):
         results = []
-        needle = name.lower()
+        needles = tag.lower().split()
         for waypoint in self.cache():
-            if needle in waypoint.name.lower():
+            for needle in needles:
+                if needle in waypoint.tags:
                     results.append(waypoint)
+                    break
         return results
         
-
     def set_device_waypoint(self, waypoint):
         self.device_table.update_item(
                 Key=dict(device='main'),
@@ -70,4 +70,7 @@ class Database:
         return self._cache
 
     def _item_to_waypoint(self, item):
-        return DBWaypoint(item['node_id'], item['description'], list(item['connections']))
+        tags = []
+        for tag in item['tags'].split(','):
+            tags.append(tag.strip().lower())
+        return DBWaypoint(item['node_id'], item['description'], list(item['connections']), tags)
