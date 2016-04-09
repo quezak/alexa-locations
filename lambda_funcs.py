@@ -140,12 +140,8 @@ def where_am_i(intent, session):
     card_title = "Where am I"
     db = Database()
     waypoint = db.get_device_waypoint()
-    answer = "You are in " + waypoint.name + ". Do you want to go somewhere?",
-    return simple_response(
-        card_title,
-        answer,
-        answer,
-        False)
+    answer = "You are in " + waypoint.name + ". Do you want to go somewhere?"
+    return simple_response(card_title, answer, answer, False)
 
 
 def travel_to(intent, session):
