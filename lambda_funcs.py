@@ -2,6 +2,9 @@
 
 from __future__ import print_function
 
+from pathgen import *
+
+
 def lambda_handler(event, context):
     """ Route the incoming request based on type (LaunchRequest, IntentRequest,
     etc.) The JSON body of the request is provided in the event parameter.
@@ -33,8 +36,8 @@ def lambda_handler(event, context):
 def on_session_started(session_started_request, session):
     """ Called when the session starts """
 
-    print("on_session_started requestId=" + session_started_request['requestId']
-          + ", sessionId=" + session['sessionId'])
+    print("on_session_started requestId=" + session_started_request['requestId'] +
+          ", sessionId=" + session['sessionId'])
 
 
 def on_launch(launch_request, session):
@@ -99,6 +102,7 @@ def get_welcome_response():
     return build_response(session_attributes, build_speechlet_response(
         card_title, speech_output, reprompt_text, should_end_session))
 
+
 def handle_session_end_request():
     card_title = "Session Ended"
     speech_output = "Thank you for trying not to get lost. " \
@@ -115,7 +119,7 @@ def set_device_waypoint(intent, session):
         return simple_response(
             card_title,
             "I'm not sure where you want to set the location. Please try again",
-            "I'm not sure where you want to set the location. You can tell me by saying, " \
+            "I'm not sure where you want to set the location. You can tell me by saying, "
             "set device waypoint to Room 3180",
             False)
     waypoint_name = intent['slots']['Waypoint']['value']
@@ -144,21 +148,30 @@ def travel_to(intent, session):
         return simple_response(
             card_title,
             "I'm not sure where you want to go. Please try again",
-            "I'm not sure where you want to go. You can tell me by saying, " \
+            "I'm not sure where you want to go. You can tell me by saying, "
             "how to get to Room 3180",
             False)
     waypoint_name = intent['slots']['Waypoint']['value']
-    # TODO get the actual path
     answer = ""
+    end_session = True
+    reprompt = None
     if waypoint_name.lower() == "rome":
         answer = "All roads lead to Rome."
     else:
-        answer = "I don't know."
+        # TODO get the actual path
+        g = build_graph(dummy_test_graph())
+        node = get_node(g, waypoint_name)
+        if node:
+            answer = gen_path_description(g, dijkstra(g, 1, node))
+        else:
+            answer = "I don't know a place named " + waypoint_name + ". Please try again."
+            reprompt = answer
+            end_session = False
     return simple_response(
         card_title,
         answer,
-        None,
-        True)
+        reprompt,
+        end_session)
 
 # --------------- Helpers that build all of the responses ----------------------
 
