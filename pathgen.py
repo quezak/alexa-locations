@@ -6,11 +6,12 @@ from sys import maxint
 from db_connection import DBWaypoint
 
 
-def dijkstra(graph, start, end):
+def dijkstra(graph, start, targets):
     """ Calculate shortest path between nodes.
 
     graph: map of node_id -> DBWaypoint
-    start, end: node_id
+    start: node_id
+    targets: list of target node_ids
     return: list of node_ids or None
     """
     distances = {start: 0, }  # no element = infinite
@@ -23,8 +24,8 @@ def dijkstra(graph, start, end):
         if node in visited:
             continue
         visited[node] = True
-        if node == end:
-            return rebuild_path(path_from, end)
+        if node in targets:
+            return rebuild_path(path_from, node)
         for neigh in graph[node].connection_ids:
             if cur_dist + 1 < distances.get(neigh, maxint):
                 neigh_dist = cur_dist+1
@@ -78,7 +79,7 @@ def gen_path_description(graph, path):
         return "No route found."
     if len(path) == 1:
         return "You're already there."
-    instrs = ["You're in " + graph[path[0]].name]
+    instrs = []
     for pos in xrange(1, len(path)):
         prefix = get_instruction_prefix(pos, len(path), graph[path[pos-1]], graph[path[pos]])
         instrs.append(prefix + graph[path[pos]].name)
@@ -108,7 +109,8 @@ def get_node(graph, name):
     return None
 
 
-def get_instructions(db_graph, start, end):
+def get_instructions(db_graph, start, end_wps):
     graph = build_graph(db_graph)
-    path = dijkstra(graph, start, end)
+    target_ids = map(lambda wp: wp.node_id, end_wps)
+    path = dijkstra(graph, start, target_ids)
     return gen_path_description(graph, path)

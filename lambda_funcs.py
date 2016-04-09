@@ -116,7 +116,7 @@ def handle_session_end_request():
 
 def set_device_waypoint(intent, session):
     card_title = "Set device location"
-    if 'Waypoint' not in intent['slots']:
+    if 'Waypoint' not in intent['slots'] or 'value' not in intent['slots']['Waypoint']:
         return simple_response(
             card_title,
             "I'm not sure where you want to set the location. Please try again",
@@ -146,7 +146,7 @@ def where_am_i(intent, session):
 
 def travel_to(intent, session):
     card_title = "Directions"
-    if 'Waypoint' not in intent['slots']:
+    if 'Waypoint' not in intent['slots'] or 'value' not in intent['slots']['Waypoint']:
         return simple_response(
             card_title,
             "I'm not sure where you want to go. Please try again",
@@ -161,14 +161,14 @@ def travel_to(intent, session):
         answer = "All roads lead to Rome."
     else:
         db = Database()
-        target_wp = db.waypoint_by_name(waypoint_name)
-        if not target_wp:
+        target_wps = db.waypoints_containing(waypoint_name)
+        if not target_wps:
             return no_such_place_response(card_title, waypoint_name)
         device_wp = db.get_device_waypoint()
         answer = get_instructions(
             db.get_whole_fucking_graph(),
             device_wp.node_id,
-            target_wp.node_id)
+            target_wps)
     return simple_response(
         card_title,
         answer,
