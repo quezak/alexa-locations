@@ -90,3 +90,9 @@ def get_node(graph, name):
         if node.name.lower() == name.lower():
             return node.node_id
     return None
+
+
+def get_instructions(db_graph, start, end):
+    graph = build_graph(db_graph)
+    path = dijkstra(graph, start, end)
+    return gen_path_description(graph, path)
