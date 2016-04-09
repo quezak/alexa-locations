@@ -13,8 +13,8 @@ def dijkstra(graph, start, end):
     start, end: node_id
     return: list of node_ids or None
     """
-    distances = { start: 0, }  # no element = infinite
-    path_from = { start: start, }
+    distances = {start: 0, }  # no element = infinite
+    path_from = {start: start, }
     visited = {}
     q = PriorityQueue()
     q.put((0, start))
@@ -83,3 +83,10 @@ def gen_path_description(graph, path):
         prefix = "Go to " if pos == 1 else "Then go to "
         instrs.append(prefix + graph[path[pos]].name)
     return ". ".join(instrs)
+
+
+def get_node(graph, name):
+    for node in graph.values():
+        if node.name.lower() == name.lower():
+            return node.node_id
+    return None

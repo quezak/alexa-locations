@@ -64,3 +64,6 @@ target/
 # vim temps
 *.swp
 *.swo
+
+# deployment zip
+lambda.zip
