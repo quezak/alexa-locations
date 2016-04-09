@@ -80,9 +80,22 @@ def gen_path_description(graph, path):
         return "You're already there."
     instrs = ["You're in " + graph[path[0]].name]
     for pos in xrange(1, len(path)):
-        prefix = "Go to " if pos == 1 else "Then go to "
+        prefix = get_instruction_prefix(pos, len(path))
         instrs.append(prefix + graph[path[pos]].name)
     return ". ".join(instrs)
+
+
+def get_instruction_prefix(pos, total):
+    if pos == 1:
+        return "Go to "
+    if pos == total-1:
+        return "Finally, head to "
+    options = [
+        "Then head to ",
+        "Continue to ",
+        "Next, go to ",
+    ]
+    return options[(pos-1) % len(options)]
 
 
 def get_node(graph, name):
