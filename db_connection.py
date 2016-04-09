@@ -31,10 +31,9 @@ class Database:
         return results
 
     def waypoint_by_name(self, name):
-        needles = name.lower().split()
+        needle = name.lower()
         for waypoint in self.cache():
-            for needle in needles:
-                if needle in waypoint.name.lower():
+            if needle in waypoint.name.lower():
                     return waypoint
         return None
 
@@ -43,6 +42,15 @@ class Database:
             if waypoint.node_id == node_id:
                 return waypoint
         return None
+
+    def waypoints_containing(self, name):
+        results = []
+        needle = name.lower()
+        for waypoint in self.cache():
+            if needle in waypoint.name.lower():
+                    results.append(waypoint)
+        return results
+        
 
     def set_device_waypoint(self, waypoint):
         self.device_table.update_item(
