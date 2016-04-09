@@ -8,6 +8,10 @@ class Database:
     def __init__(self):
         pass
 
+    def get_whole_fucking_graph(self):
+        """Returns an list object of the whole graph of waypoints"""
+        pass
+
     def waypoint_by_name(self, name):
         pass
 
