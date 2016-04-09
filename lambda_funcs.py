@@ -2,7 +2,8 @@
 
 from __future__ import print_function
 
-from pathgen import *
+from pathgen import get_instructions
+from db_connection import Database
 
 
 def lambda_handler(event, context):
@@ -94,7 +95,7 @@ def get_welcome_response():
 
     session_attributes = {}
     card_title = "Welcome"
-    speech_output = "Welcome to MIMUW. You can ask me how to get to various places."
+    speech_output = "Where do you want to go?"
     # If the user either does not reply to the welcome message or says something
     # that is not understood, they will be prompted again with this text.
     reprompt_text = "To get directions, ask how to get to a certain place."
@@ -122,24 +123,29 @@ def set_device_waypoint(intent, session):
             "I'm not sure where you want to set the location. You can tell me by saying, "
             "set device waypoint to Room 3180",
             False)
+    db = Database()
     waypoint_name = intent['slots']['Waypoint']['value']
-    print('setting device waypoint to ', waypoint_name)
-    # TODO run the actual set operation
+    waypoint = db.waypoint_by_name(waypoint_name)
+    if not waypoint:
+        return no_such_place_response(card_title, waypoint_name)
+    db.set_device_waypoint(waypoint)
     return simple_response(
         card_title,
-        "Device location set to " + waypoint_name,
+        "Device location set to " + waypoint.name,
         None,
         True)
 
 
 def where_am_i(intent, session):
     card_title = "Where am I"
-    # TODO get the actual position
+    db = Database()
+    waypoint = db.get_device_waypoint()
+    answer = "You are in " + waypoint.name + ". Do you want to go somewhere?",
     return simple_response(
         card_title,
-        "You are somewhere.",
-        None,
-        True)
+        answer,
+        answer,
+        False)
 
 
 def travel_to(intent, session):
@@ -158,20 +164,25 @@ def travel_to(intent, session):
     if waypoint_name.lower() == "rome":
         answer = "All roads lead to Rome."
     else:
-        # TODO get the actual path
-        g = build_graph(dummy_test_graph())
-        node = get_node(g, waypoint_name)
-        if node:
-            answer = gen_path_description(g, dijkstra(g, 1, node))
-        else:
-            answer = "I don't know a place named " + waypoint_name + ". Please try again."
-            reprompt = answer
-            end_session = False
+        db = Database()
+        target_wp = db.waypoint_by_name(waypoint_name)
+        if not target_wp:
+            return no_such_place_response(card_title, waypoint_name)
+        device_wp = db.get_device_waypoint()
+        answer = get_instructions(
+            db.get_whole_fucking_graph(),
+            device_wp.node_id,
+            target_wp.node_id)
     return simple_response(
         card_title,
         answer,
         reprompt,
         end_session)
+
+
+def no_such_place_response(title, name):
+    answer = "I don't know a place named " + name + ". Please try again."
+    return simple_response(title, answer, answer, False)
 
 # --------------- Helpers that build all of the responses ----------------------
 
