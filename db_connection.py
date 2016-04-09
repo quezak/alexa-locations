@@ -15,7 +15,7 @@ class Database:
         )
         self.waypoints_table = self.dynamo.Table('Localization')
         self.device_table = self.dynamo.Table('Device')
-        self.cache = self.get_whole_fucking_graph()
+        self._cache = None
 
     def get_whole_fucking_graph(self):
         """Returns an list object of the whole graph of waypoints"""
@@ -25,17 +25,21 @@ class Database:
         for item in response['Items']:
             results.append(self._item_to_waypoint(item))
 
+        if self._cache is None:
+            self._cache = results
+
         return results
 
     def waypoint_by_name(self, name):
-        needle = name.lower()
-        for waypoint in self.cache:
-            if needle in waypoint.name.lower():
-                return waypoint
+        needles = name.lower().split()
+        for waypoint in self.cache():
+            for needle in needles:
+                if needle in waypoint.name.lower():
+                    return waypoint
         return None
 
     def waypoint_by_id(self, node_id):
-        for waypoint in self.cache:
+        for waypoint in self.cache():
             if waypoint.node_id == node_id:
                 return waypoint
         return None
@@ -51,6 +55,11 @@ class Database:
         response = self.device_table.get_item(Key=dict(device='main'))
         item = response['Item']
         return self.waypoint_by_id(item[u'node_id'])
+
+    def cache(self):
+        if self._cache == None:
+            self.get_whole_fucking_graph()
+        return self._cache
 
     def _item_to_waypoint(self, item):
         return DBWaypoint(item['node_id'], item['description'], list(item['connections']))
