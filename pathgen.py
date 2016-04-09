@@ -3,11 +3,13 @@
 from Queue import PriorityQueue
 from sys import maxint
 
+from db_connection import DBWaypoint
 
-def dijkstra(neighbors, start, end):
+
+def dijkstra(graph, start, end):
     """ Calculate shortest path between nodes.
 
-    neighbors: map node_id -> array of neighbors
+    graph: map of node_id -> DBWaypoint
     start, end: node_id
     return: list of node_ids or None
     """
@@ -18,12 +20,12 @@ def dijkstra(neighbors, start, end):
     q.put((0, start))
     while not q.empty():
         (cur_dist, node) = q.get()
-        if visited[node]:
+        if node in visited:
             continue
         visited[node] = True
         if node == end:
             return rebuild_path(path_from, end)
-        for neigh in neighbors.get(node, []):
+        for neigh in graph[node].connection_ids:
             if cur_dist + 1 < distances.get(neigh, maxint):
                 neigh_dist = cur_dist+1
                 distances[neigh] = neigh_dist
@@ -41,3 +43,25 @@ def rebuild_path(path_from, end):
         path.append(node)
     path.reverse()
     return path
+
+
+def build_graph(node_list):
+    """ Generate a graph lookup map.
+
+    node_list: list of DBWaypoint
+    return: map of node_id -> DBWaypoint
+    """
+    res_graph = {}
+    for waypoint in node_list:
+        res_graph[waypoint.node_id] = waypoint
+    return res_graph
+
+
+def dummy_test_graph():
+    """ sample return value of Database.get_whole_graph() """
+    return [
+        DBWaypoint(1, "Room 3180", [2]),
+        DBWaypoint(2, "Main hall", [1, 2, 3]),
+        DBWaypoint(3, "North corridor", [2, 4]),
+        DBWaypoint(4, "Toilet", [3]),
+    ]
