@@ -1,5 +1,5 @@
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
+
 
 class DBWaypoint:
     def __init__(self, node_id, name, connection_ids):
@@ -7,12 +7,10 @@ class DBWaypoint:
         self.name = name
         self.connection_ids = connection_ids
 
+
 class Database:
     def __init__(self):
-        self.dynamo = boto3.resource(
-                'dynamodb'
-                #endpoint_url="http://localhost:8000"
-        )
+        self.dynamo = boto3.resource('dynamodb')
         self.waypoints_table = self.dynamo.Table('Localization')
         self.device_table = self.dynamo.Table('Device')
         self._cache = None
@@ -50,13 +48,12 @@ class Database:
             if needle in waypoint.name.lower():
                     results.append(waypoint)
         return results
-        
 
     def set_device_waypoint(self, waypoint):
         self.device_table.update_item(
-                Key=dict(device='main'),
-                UpdateExpression='SET node_id = :val1',
-                ExpressionAttributeValues={ ':val1': waypoint.node_id }
+            Key=dict(device='main'),
+            UpdateExpression='SET node_id = :val1',
+            ExpressionAttributeValues={':val1': waypoint.node_id}
         )
 
     def get_device_waypoint(self):
@@ -65,7 +62,7 @@ class Database:
         return self.waypoint_by_id(item[u'node_id'])
 
     def cache(self):
-        if self._cache == None:
+        if self._cache is None:
             self.get_whole_fucking_graph()
         return self._cache
 
